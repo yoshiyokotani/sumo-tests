@@ -4,7 +4,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from pages.page import Page
-
+from selenium.webdriver.common.keys import Keys
+from selenium.common import exceptions 
 
 class PageProvider():
     ''' internal methods '''
@@ -14,8 +15,36 @@ class PageProvider():
         self.base_url = testsetup.base_url
         self.selenium = testsetup.selenium
 
+    def _set_window_small(self, percent=100, zoom_level=100):
+        #check the current size of the browser window
+        dim = self.selenium.get_window_size()
+ 
+        #calculate the target window size
+        width = int(dim['width']*percent/100.0)
+        height = int(dim['height']*percent/100.0)
+    
+        #set the window size    
+        self.selenium.set_window_size(width, height)
+ 
+        #get the entire browser as an element
+        el_window = self.selenium.switch_to_active_element()
+ 
+        #repeat CTRL+'-' until it approximately meets the given zoom-in level
+        if zoom_level < 100:
+            el_window.send_keys(Keys.CONTROL,Keys.SUBTRACT) #100->90%
+        if zoom_level < 90:  
+            el_window.send_keys(Keys.CONTROL,Keys.SUBTRACT) #90->80%
+        if zoom_level < 80:
+            el_window.send_keys(Keys.CONTROL,Keys.SUBTRACT) #80->67% 
+
+    def _set_zoom_default(self):    
+        el_window = self.selenium.switch_to_active_element()
+        el_window.send_keys(Keys.CONTROL,'0') #100%     
+
+
     def _go_to_page(self, page_object, do_login=False, user='default'):
-        self.selenium.maximize_window()
+        #self.selenium.maximize_window()
+        self._set_window_small(90,67) 
         self.selenium.get(self.base_url + page_object._page_url)
         page_object.is_the_current_page
         if (do_login):
@@ -23,7 +52,8 @@ class PageProvider():
         return page_object
 
     def _go_to_page_with_login_redirect(self, page_object, user='default'):
-        self.selenium.maximize_window()
+        #self.selenium.maximize_window()
+        self._set_window_small(90,67) 
         from pages.desktop.login_page import LoginPage
         self.selenium.get(self.base_url + page_object._page_url)
         login_page = LoginPage(self.testsetup)
