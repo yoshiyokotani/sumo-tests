@@ -5,79 +5,77 @@
 
 import selenium.common.exceptions as Exceptions
 
+from pages.page import Page
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from unittestzero import Assert
 
-class Utils():
+
+class Utils(Page):
+
+    header_element_locator = (By.XPATH, "//a[@id='tabzilla']")
+    footer_element_locator = (By.XPATH, "//footer//li/a[text()='Source Code']")
 
     def __init__(self, testsetup):
         self.selenium = testsetup.selenium
         self.timeout = testsetup.timeout
 
-    @property
-    def find_element_and_wait(self,locator,parent=None):
-     
+    def find_element_and_wait(self, parent=None, by=By.ID, value=None): 
         if parent is None:
-            parent = self.selenium
-        
+            parent = self.selenium        
         try:
-            element = WebDriverWait(self.selenium,self.timeout). \
-                                    until(lambda s: parent.find_element(*locator))        
-        except Exceptions.TimeoutException:
+            element = WebDriverWait(self.selenium, self.timeout). \
+                                    until(lambda s: parent.find_element(by, value))        
+        except Exceptions.WebDriverException:
             print "find_element_and_wait: failed to find the target element"
             element = None 
-    
         return element
 
-    @property
-    def find_element_wait_assert_click(self,locator,parent=None):
+    def find_element_wait_assert_click(self, parent=None, by=By.ID, value=None):
+        element = self.find_element_and_wait(parent, by, value)
+        Assert.not_none(element)
+        element.click()
+        return element
 
-        element = None
-        #element = self.find_element_and_wait(locator,parent)
-        #Assert.none(element)
-        #element.click()
-        
-        return element       
-        
-    @property
-    def find_elements_and_wait(self,locator,parent=None):
-        
+    def find_elements_and_wait(self, parent=None, by=By.ID, value=None):
         if parent is None:
             parent = self.selenium
-        
         try:
-            elements = WebDriverWait(self.selenium,self.timeout). \
-                                     until(lambda s: parent.find_elements(*locator))
+            elements = WebDriverWait(self.selenium, self.timeout). \
+                                     until(lambda s: parent.find_elements(by, value))
         except Exceptions.TimeoutException:
             print "find_elements_and_wait: failed to find the target element"
             elements = None
-                
         return elements
-    
-    @property
-    def find_elements_wait_asssert_click(self,locator,parent=None):
-    
-        elements = self.find_elements_and_wait(locator,parent)
-        num_elements = len(elements)
-        for i in range(num_elements):
-            element = elements[i]
+
+    def find_elements_wait_assert_click(self, parent=None, by=By.ID, value=None):
+        elements = self.find_elements_and_wait(parent, by, value)
+        for element in elements:
             #go to one of the links
             element.click()
             #come back
             self.go_back_page()
             #run find_elements again
-            #elements = self.find_elements_and_wait(locator,parent)
- 
+            elements = self.find_elements_and_wait(parent, by, value)
     
-    def match_urls(self, url1):
-        
+    def match_urls(self, url):
         current_addr = self.selenium.current_url
-        if current_addr == url1:
+        if current_addr == url:
             return True
         else:
             return False
-        
-    def go_back_page(self):
-        
-        self.selenium.back()
+
+    def scroll_page(self, direction='down'):
+        bRet = False
+        if direction == "up":
+            #find one of the elements located in the header
+            element = self.find_element_and_wait(None, *self.header_element_locator)
+        elif direction == "down":
+            #find one of the elements located in the footer
+            element = self.find_element_and_wait(None, *self.footer_element_locator)
+        else:
+            element = None
+        if element is not None:
+            element.location_once_scrolled_into_view
+            bRet = True
+        return bRet
