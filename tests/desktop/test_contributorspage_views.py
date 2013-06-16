@@ -6,6 +6,7 @@
 import pytest
 
 from pages.desktop.page_provider import PageProvider
+from pages.desktop.utils import Utils
 from selenium.webdriver.common.by import By
 
 from pages.desktop.contributors_page import ContributorsPage
@@ -13,19 +14,19 @@ from pages.desktop.for_contributors_menu import ForContributorsMenu
 from selenium import webdriver
 from unittestzero import Assert
 
-@pytest.mark.skipif("config.getvalue('base_url')=='https://support-dev.allizom.org'")
+
 class TestContributorsPageViews:
-                   
+
     @pytest.mark.nondestructive
-    def test_first_level_view_contributors_menu(self, mozwebqa):      
-        
+    def test_first_level_view_contributors_menu(self, mozwebqa):
+
         #go to the home page
         home_page = PageProvider(mozwebqa).home_page()
         home_page.sign_in('default')
-              
+
         #[H] click the link to open the menu "for contributors"
         menu = ForContributorsMenu(mozwebqa)
-        menu.open_contributors_menu()       
+        menu.open_contributors_menu()
         #check if the menu has been displayed
         Assert.true(menu.is_contributors_menu_displayed)
 
@@ -37,12 +38,12 @@ class TestContributorsPageViews:
             menu_link = menu_links[i]
             #[H] go to the link
             result = menu.click_and_check_url(menu_link)
-            if result == False:    
+            if result == False:
                 break
 
             #[H] scroll down to the bottom
             result = menu.scroll_page('down')
-            if result == False:    
+            if result == False:
                 break
 
             #[H] back to the home page
@@ -61,10 +62,9 @@ class TestContributorsPageViews:
     def test_quickstart_guide(self, mozwebqa):
 
         _loc_quickstart_guide = (By.XPATH, ".//*[@id='for-contributors']/section/ul//li/a[text()='Quickstart Guide']")
-        _loc_involvements = (By.XPATH, "//div[@class='grid_3']")
-        _loc_inv_link = (By.CSS_SELECTOR, "a")
+        _loc_involvements = (By.XPATH, "//div[@class='row cf pick-a-way']//a")
 
-         #go to the home page
+        #go to the home page
         home_page = PageProvider(mozwebqa).home_page()
         home_page.sign_in('default')
 
@@ -72,13 +72,14 @@ class TestContributorsPageViews:
         utils = Utils(mozwebqa)
 
         #[H] click the link to open the menu "for contributors"
-        Utils(mozwebqa).find_element_wait_assert_click(self._loc_contributors_header,None)
+        menu = ForContributorsMenu(mozwebqa)
+        menu.open_contributors_menu()
 
         #[H] click the link to the quickstart guide
-        utils.find_element_wait_assert_click(_loc_quickstart_guide)
+        utils.find_element_wait_assert_click(None, *_loc_quickstart_guide)
 
         #[M] find involvement elements (links)
-        utils.find_elements_wait_assert_click(_loc_involvements)
+        utils.find_elements_wait_assert_click(None, *_loc_involvements)
 
     @pytest.mark.nondestructive
     def test_news_and_resources(self, mozwebqa): 
@@ -95,43 +96,28 @@ class TestContributorsPageViews:
         utils = Utils(mozwebqa)
 
         #[H] click the link to open the menu "for contributors"
-        menu_link = utils.find_element_and_wait(self._loc_contributors_header)
-        if menu_link is not None:
-            menu_link.click()    #open the menu
-        else:
-            print "test_news_and_resources: failed to find the menu.\n"
-        return
+        menu = ForContributorsMenu(mozwebqa)
+        menu.open_contributors_menu()
 
         #[H] click the link to the news & resources
-        guide_link = utils.find_element_and_wait(_loc_news_and_resources)
-        if guide_link is not None:
-            guide_link.click()    #open the menu
-        else:
-            print "test_news_and_resources: failed to find the target link.\n"
-        return
+        utils.find_element_wait_assert_click(None, *_loc_news_and_resources)
 
         #[M] find TOC elements (links)
-        TOC_links = utils.find_elements_and_wait(_loc_toc)
-        if TOC_links is None:
-            print "test_news_and_resources: failed to find links to involvements.\n"
-            return
-        else:
-            num_TOCs = len(TOC_links)
-            num_TOCs = 1
+        TOC_links = utils.find_elements_and_wait(None, *_loc_toc)
+        Assert.not_none(TOC_links)
+
+        num_TOCs = len(TOC_links)
         for i in range(num_TOCs):
             TOC_link = TOC_links[i]
             #[H] click a link to one of the TOCs  
             TOC_link.click()
-            #[H] find all the associated articles             
-            article_links = utils.find_elements_and_wait(_loc_articles)
+            #[H] find all the associated articles
+            article_links = utils.find_elements_and_wait(None, *_loc_articles)
             num_article_links = len(article_links)
             for j in range(num_article_links):
                 article_link = article_links[j]
-                if article_link is not None:
-                    article_link.click()    #open the menu
-                else:
-                    print "test_news_and_resources: failed to find links to articles.\n"
-                    return
+                article_link.click()
                 #[H] back to the home page
-                utils.go_back_page()
-                  
+                mozwebqa.selenium.back()
+                #[H] find all the associated articles
+                article_links = utils.find_elements_and_wait(None, *_loc_articles)

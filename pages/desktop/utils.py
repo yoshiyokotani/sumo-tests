@@ -50,14 +50,17 @@ class Utils(Page):
 
     def find_elements_wait_assert_click(self, parent=None, by=By.ID, value=None):
         elements = self.find_elements_and_wait(parent, by, value)
-        for element in elements:
+        num_elements = len(elements)
+        for index in range(num_elements):
+            element = elements[index]
             #go to one of the links
             element.click()
             #come back
-            self.go_back_page()
+            self.selenium.back()
             #run find_elements again
             elements = self.find_elements_and_wait(parent, by, value)
-    
+        return elements
+
     def match_urls(self, url):
         current_addr = self.selenium.current_url
         if current_addr == url:
