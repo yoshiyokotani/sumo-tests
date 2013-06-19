@@ -85,8 +85,8 @@ class TestContributorsPageViews:
     def test_news_and_resources(self, mozwebqa): 
 
         _loc_news_and_resources = (By.XPATH, ".//*[@id='for-contributors']/section/ul//li/a[text()='News & Resources']")
-        _loc_toc = (By.XPATH, "//div[@id='toc']/ul//a")
-        _loc_articles = (By.XPATH, "//article//section//ul//li/a")
+        _loc_doc_content = (By.ID, "doc-content")
+        _loc_articles = (By.CSS_SELECTOR, " a")
 
         #go to the home page
         home_page = PageProvider(mozwebqa).home_page()
@@ -102,22 +102,28 @@ class TestContributorsPageViews:
         #[H] click the link to the news & resources
         utils.find_element_wait_assert_click(None, *_loc_news_and_resources)
 
-        #[M] find TOC elements (links)
-        TOC_links = utils.find_elements_and_wait(None, *_loc_toc)
-        Assert.not_none(TOC_links)
+        #[M] find all the "a" elements (links)
+        doc_content = utils.find_element_and_wait(None, *_loc_doc_content)
+        article_links = utils.find_elements_and_wait(doc_content, *_loc_articles)
+        Assert.not_none(article_links)
 
-        num_TOCs = len(TOC_links)
-        for i in range(num_TOCs):
-            TOC_link = TOC_links[i]
-            #[H] click a link to one of the TOCs  
-            TOC_link.click()
-            #[H] find all the associated articles
-            article_links = utils.find_elements_and_wait(None, *_loc_articles)
-            num_article_links = len(article_links)
-            for j in range(num_article_links):
-                article_link = article_links[j]
-                article_link.click()
-                #[H] back to the home page
-                mozwebqa.selenium.back()
-                #[H] find all the associated articles
-                article_links = utils.find_elements_and_wait(None, *_loc_articles)
+        num_articles = len(article_links)
+        for i in range(num_articles):
+            #access each link
+            article_link = article_links[i]
+            #get the destination URL
+            url = article_link.get_attribute("href")
+            if False == article_link.is_displayed():
+                continue
+            #[H] click the link
+            article_link.click()
+            mozwebqa.selenium.implicitly_wait(10)
+            Assert.equal(mozwebqa.selenium.current_url, url)
+
+            #[H] back to the home page
+            mozwebqa.selenium.back()
+            mozwebqa.selenium.implicitly_wait(10)
+
+            #[M] find all the "a" elements (links) again
+            doc_content = utils.find_element_and_wait(None, *_loc_doc_content)
+            article_links = utils.find_elements_and_wait(doc_content, *_loc_articles)
