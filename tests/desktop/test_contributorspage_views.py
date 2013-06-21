@@ -117,12 +117,10 @@ class TestContributorsPageViews:
                 continue
             #[H] click the link
             article_link.click()
-            mozwebqa.selenium.implicitly_wait(10)
-            Assert.equal(mozwebqa.selenium.current_url, url)
+            utils.wait_until_page_loaded(url)
 
             #[H] back to the home page
-            mozwebqa.selenium.back()
-            mozwebqa.selenium.implicitly_wait(10)
+            utils.back()
 
             #[M] find all the "a" elements (links) again
             doc_content = utils.find_element_and_wait(None, *_loc_doc_content)

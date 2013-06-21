@@ -7,7 +7,10 @@ import selenium.common.exceptions as Exceptions
 
 from pages.page import Page
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.expected_conditions import alert_is_present
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.alert import Alert
 from unittestzero import Assert
 
 
@@ -82,3 +85,19 @@ class Utils(Page):
             element.location_once_scrolled_into_view
             bRet = True
         return bRet
+
+    def wait_until_page_loaded(self, dest_URL):
+        dest_URL_part = dest_URL[dest_URL.rfind("/")+1:len(dest_URL)]
+        while 1:
+            self.selenium.implicitly_wait(10)
+            curr_URL = self.selenium.current_url
+            if curr_URL.find(dest_URL_part) != -1:
+                break
+
+    def back(self):
+        #take one page back
+        self.selenium.back()
+        isAlertPresent = alert_is_present()
+        Alert = isAlertPresent.__call__(self.selenium)
+        if Alert is not False:
+            Alert.accept() 
